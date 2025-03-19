@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS public.roles
     CONSTRAINT jobs_pkey PRIMARY KEY (role_id)
 );
 
-CREATE TABLE IF NOT EXISTS public."overtime hours"
+CREATE TABLE IF NOT EXISTS public.overtime_hours
 (
     overtime_id bigserial NOT NULL,
-    overtime_hours numeric(10, 2)
+    overtime_hours integer
 );
 
 CREATE TABLE IF NOT EXISTS public.salaries
@@ -81,7 +81,7 @@ END;
 
 ----- INSERT STATEMENTS -----
 
-INSERT INTO department (depart_name, depart_city)
+INSERT INTO department (department_name, department_city)
 VALUES 
 ('Maintanance', 'Pretoria'),
 ('logistics', 'Kempton park'),
@@ -104,7 +104,7 @@ SELECT * FROM salaries
 
 INSERT INTO overtime_hours (overtime_hours)
 VALUES 
-('10.10'),
+('20'),
 ('10'),
 ('80');
 SELECT * FROM overtime_hours
