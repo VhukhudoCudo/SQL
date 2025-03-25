@@ -3,12 +3,12 @@
 BEGIN;
 
 
-CREATE TABLE IF NOT EXISTS public.products_menu
+CREATE TABLE IF NOT EXISTS public.products _menu 
 (
-    prodcuct_id bigserial,
+    product_id bigserial,
     name character varying(50),
     price numeric(10),
-    PRIMARY KEY (prodcuct_id)
+    PRIMARY KEY (product_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.cart
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.cart
 
 CREATE TABLE IF NOT EXISTS public.users
 (
-    user_id bigserial,
+    user_Id bigserial,
     username character varying(50),
     PRIMARY KEY (user_Id)
 );
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.order_header
 (
     order_id bigserial,
     user_id integer,
-    orderdate time with time zone,
+    order_date time with time zone,
     PRIMARY KEY (order_id)
 );
 
@@ -40,17 +40,9 @@ CREATE TABLE IF NOT EXISTS public.order_details
     qty integer
 );
 
-ALTER TABLE IF EXISTS public.products_menu
-    ADD FOREIGN KEY (prodcuct_id)
-    REFERENCES public.order_details (product_id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
 ALTER TABLE IF EXISTS public.cart
     ADD FOREIGN KEY (product_id)
-    REFERENCES public.products_menu (prodcuct_id) MATCH SIMPLE
+    REFERENCES public.products _menu  (product_id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
@@ -58,7 +50,7 @@ ALTER TABLE IF EXISTS public.cart
 
 ALTER TABLE IF EXISTS public.order_header
     ADD FOREIGN KEY (order_id)
-    REFERENCES public.users (user_Id) MATCH SIMPLE
+    REFERENCES public.users   (user_Id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
@@ -71,11 +63,17 @@ ALTER TABLE IF EXISTS public.order_details
     ON DELETE NO ACTION
     NOT VALID;
 
+
+ALTER TABLE IF EXISTS public.order_details
+    ADD FOREIGN KEY (product_id)
+    REFERENCES public."products _menu " (product_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
 END;
 
-------------------------INSERT STATEMENTS-------------
-
-INSERT INTO products_menu (name, price)
+------INSERT STATEMENTS----
 VALUES 
 ('Sneaker', '1500.00'),
 ('Shirt', '400.00'),
@@ -97,19 +95,15 @@ VALUES
 ('Bob');
 SELECT * FROM users;
 
--------Queries----
+--------CheckOut-----
+---adding to cart
 
----------CheckOut----
-
-
--- USER 
--- adding to cart
 DO $$
 BEGIN
-IF EXISTS ( SELECT * FROM cart WHERE product_id = 5 AND qty > 1) THEN 
-UPDATE cart SET qty = qty - 1 WHERE product_id = 4;
+IF EXISTS ( SELECT * FROM cart WHERE product_id = 4) THEN 
+UPDATE cart SET qty = qty + 1 WHERE product_id = 4;
 ELSE 
-DELETE  FROM cart WHERE product_id = 1;
+INSERT INTO cart(product_id, qty) VALUES(4, 1);
 END IF;
 END $$
 SELECT * FROM cart
@@ -123,31 +117,30 @@ FROM cart AS cart
 JOIN products_menu AS prod_m
 ON cart.product_id = prod_m.product_id;
 
----deleting from cart
+-- deleting from cart
 DO $$
 BEGIN
 IF EXISTS ( SELECT * FROM cart WHERE product_id = 5 AND qty > 1) THEN 
-UPDATE cart SET qty = qty - 1 WHERE product_id = 3;
-ELSE
- 
-DELETE  FROM cart WHERE product_id = 2;
+UPDATE cart SET qty = qty - 1 WHERE product_id = 4;
+ELSE 
+DELETE  FROM cart WHERE product_id = 4;
 END IF;
 END $$
 SELECT * FROM cart
 
 SELECT 
 cart.product_id,
-prod_m.name,
-prod_m.price,
+p_m.name,
+p_m.price,
 cart.qty
 FROM cart AS cart
-JOIN products_menu AS prod_m
-ON cart.product_id = prod_m.product_id;
+JOIN products_menu AS p_m
+ON cart.product_id = p_m.product_id;
 
---checkout
+-- checkout
 INSERT INTO order_header(user_id, order_date)
 VALUES 
-(2, now());
+(6, now());
 SELECT * FROM order_header;
 
 SELECT 
@@ -157,7 +150,6 @@ users.username,
 od_h.order_date
 FROM order_header AS od_h JOIN users ON od_h.user_id = users.user_id
 
-
 INSERT INTO order_details(order_id, product_id, qty)
 SELECT
 (SELECT MAX(order_id) FROM order_header), product_id, qty 
@@ -165,30 +157,15 @@ FROM cart;
 DELETE FROM cart;
 SELECT * FROM cart
 
------Sigle Order----
+-- single order
 SELECT 
-o_d.order_id,
+od_details.order_id,
 users.username,
-p_m.name AS item,
-o_d.qty,
-p_m.price AS unit_price,
-o_h.order_date
-FROM order_details AS o_d JOIN order_header AS o_h ON o_d.order_id = o_h.order_id
-JOIN users ON users.user_id = o_h.user_id
-JOIN products_menu AS p_m ON p_m.product_id = o_d.product_id
-WHERE o_d.order_id = 5;
-
-
-
--- multiple orders---
-SELECT 
-    od_details.order_id,
-    users.username,
-    prod_m.name AS item,
-    od_details.qty,
-    prod_m.price AS unit_price,
-    od_h.order_date
-FROM order_details AS od_details 
-JOIN order_header AS od_h ON od_details.order_id = od_h.order_id
+prod_m.name AS item,
+od_details.qty,
+prod_m.price AS unit_price,
+od_h.order_date
+FROM order_details AS od_details JOIN order_header AS od_h ON od_details.order_id = od_h.order_id
 JOIN users ON users.user_id = od_h.user_id
-JOIN products_menu AS prod_m ON prod_m.product_id = od_details.product_id;
+JOIN products_menu AS prod_m ON prod_m.product_id = od_details.product_id
+WHERE od_details.order_id = 5;
